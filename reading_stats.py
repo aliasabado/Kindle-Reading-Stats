@@ -10,12 +10,12 @@ from matplotlib.ticker import MultipleLocator
 # days_read = pd.read_csv('ReadingInsightsDayUnits.csv', parse_dates=['reading_tracked_on_day'])
 # book_session = pd.read_csv('reading-insights-sessions.csv', parse_dates=['end_time', 'start_time'])
 # session = pd.read_csv('ReadingSession.csv', parse_dates=['start_timestamp', 'end_timestamp'])
-completed_books = pd.read_csv('TitlesCompleted.csv')
+completed_books = pd.read_csv('datasets/TitlesCompleted.csv')
 
 # FILNAMES
-readingInsights = 'Kindle.reading-insights-sessions_with_adjustments.csv'
-readingSession = 'Kindle.Devices.ReadingSession.csv'
-gdLibrary = 'goodreads_library_export.csv'
+readingInsights = 'datasets/Kindle.reading-insights-sessions_with_adjustments.csv'
+readingSession = 'datasets/Kindle.Devices.ReadingSession.csv'
+gdLibrary = 'datasets/goodreads_library_export.csv'
 
 ########################################################
 ############ READING ALL DATASETS ######################
@@ -44,7 +44,7 @@ def clean_session_file():
 
 def clean_book_insights():
 
-    book_session = pd.read_csv('Kindle.reading-insights-sessions_with_adjustments.csv')
+    book_session = pd.read_csv(readingInsights)
     book_session['start_time'] = pd.to_datetime(book_session["start_time"], format='mixed')
     book_session['end_time'] = pd.to_datetime(book_session["end_time"], format='mixed')
     book_session['start_local'] = book_session['start_time'].dt.tz_convert('America/Vancouver')
@@ -58,7 +58,7 @@ def clean_book_insights():
 
 def clean_goodreads():
     goodreads = pd.read_csv(gdLibrary)
-    goodreads = goodreads.iloc[:, 0:16]
+    goodreads = goodreads.iloc[:, list(range(16)) + [18]]
 #    goodreads = goodreads[goodreads['Date Read'].notna()]
     goodreads['Year Read'] = pd.to_datetime(goodreads['Date Read'], errors='coerce').dt.year.astype('Int64')
     goodreads['Month Read'] = pd.to_datetime(goodreads['Date Read'], errors='coerce').dt.month.astype('Int64')
@@ -94,7 +94,7 @@ def reading_totals():
 
     overall_stat = (days, hours, minutes, seconds)
 
-    #print(f"Total Time Spent Reading: {int(days)} days, {int(hours)} hours, {int(minutes)} minutes, and {int(seconds)} seconds.")
+    print(f"Total Time Spent Reading: {int(days)} days, {int(hours)} hours, {int(minutes)} minutes, and {int(seconds)} seconds.")
     
     return read_per_day, overall_stat
 
@@ -126,6 +126,7 @@ def shortest_longest_book():
     _, date_read = totalBooksRead()
     completed_books = pd.merge(insights, date_read, how='left', left_on='book_title', right_on='Title')
     completed_books = completed_books[completed_books['Date Read'].notna()]
+    #completed_books = completed_books[completed_books['Exclusive Shelf'] == 'read']
     completed_books = completed_books[completed_books['start_date'] <= completed_books['Date Read']]
     #print(completed_books)
 
@@ -151,12 +152,17 @@ def shortest_longest_book():
 def totalPagesRead():
     curr_year = date.today().year
 
+    # number of physical pages read
     goodreads = clean_goodreads()
-    completed_books = goodreads[goodreads['Date Read'].notna()]
+    completed_books = completed_books[completed_books['Exclusive Shelf'] == 'read']
     completed_books = completed_books[(completed_books['Year Read'] == 2025) | (completed_books['Year Read'] == 2026)]
-    total_pages = completed_books['Number of Pages'].sum()
+    physical_pages = completed_books['Number of Pages'].sum()
 
-    return total_pages
+    # number of kindle pages flipped
+    session = clean_session_file()
+    kindle_pages = int(session['number_of_page_flips'].sum())
+
+    return physical_pages, kindle_pages
 
 
 def totalBooksRead():
@@ -175,6 +181,23 @@ def totalBooksRead():
         print(f'{i+1}. {two_years['Title'].values[i]} on {two_years['Date Read'].values[i]}')
 
     return book_count, books
+
+
+def sessionCount():
+    session = clean_session_file()
+
+    num_of_days = len(session['start_date'].unique())
+    num_of_sessions = len(session)
+
+    print(f'You picked up your kindle for {num_of_days} separate days and opened it {num_of_sessions} different times.')
+
+
+def faveAuthors():
+    goodreads = clean_goodreads()
+    completed_books = goodreads[goodreads['Exclusive Shelf'] == 'read']
+
+    author_count = completed_books.groupby(['Author'])['Title'].count().reset_index().sort_values(by='Title', ascending=False)
+    print(author_count)
 
 
 # not done, multi-axis plot not showing
@@ -277,11 +300,17 @@ def hourlyReading():
     g.set_xticks([m.to_timestamp() for m in months])
     g.set_xticklabels([m.strftime('%b') for m in months])
 
+    plt.savefig("hourly_stats.png", dpi=300, bbox_inches='tight')
     plt.show()
 
 
 def main():
-    hourlyReading()
+    #hourlyReading()
+    #sessionCount()
+    #shortest_longest_book()
+    #faveAuthors()
+    data = clean_session_file()
+    print(data['start_local'].head())
 
 
 
