@@ -141,6 +141,14 @@ def main():
     
     #print(bookGenres)
 
+    genre_counts = Counter()
+    for genre in bookGenres.values():
+        genre_counts.update(genre)
+
+    print(genre_counts)
+    top5 = genre_counts.most_common(5)
+    print(top5)
+
 
 if __name__ == "__main__":
     main()
