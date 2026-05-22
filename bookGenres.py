@@ -3,16 +3,18 @@ import requests
 from urllib.parse import urlencode
 from collections import Counter
 import re
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 """
 Read and clean GoodReads Export .csv file to get book information
 """
 def clean_goodreads():
-    gdLibrary = 'goodreads_library_export.csv'
+    gdLibrary = 'datasets/goodreads_library_export.csv'
     goodreads = pd.read_csv(gdLibrary)
     
-    goodreads = goodreads.iloc[:, 0:16]
+    goodreads = goodreads.iloc[:, list(range(16)) + [18]]
     goodreads.rename(columns={'Title': 'Title And Series'}, inplace=True)
     goodreads['Title'] = goodreads['Title And Series'].str.split("(").str[0].str.strip()
     goodreads['ISBN'] = goodreads['ISBN'].str.extract(r'(\d+)')
@@ -85,69 +87,115 @@ def subjectList(record):
 """
 Extracts the most frequent words from a list of book subjects.
 """
+# def simpleGenres(subjects):
+#     common_genres = ['fantasy', 'romance', 'fiction', 'thriller', 'mystery', 'horror', 'dystopian', 'drama', 'historical']
+#     multi_genres = ['fantasy fiction', 'science fiction', 'historical romance', 'mystery thriller', 'young adult', 'enemies to lovers', 'new york times bestseller', 'american literature']
+#     stopwords = {'and', 'to', 'in', 'of', 'the', 'for', 'on', 'with', 'by', 'a', 'an', 'at', 'from', 'as', 'is', 'it', 'its'}
+
+
+#     words = []
+#     phrases = []
+#     for s in subjects:
+#         s = s.lower()
+
+#         for phrase in multi_genres:
+#             if phrase in s:
+#                 phrases.append(phrase)
+#                 s = s.replace(phrase, '') # prevent word from being counted twice
+
+#         tokens = re.findall(r'[a-z]+', s)
+#         words.extend(tokens)
+
+#     words = [w for w in words if w not in stopwords and len(w) > 2]
+#     counter = Counter(words)
+#     phrase_counter = Counter(phrases)
+#     counter.update(phrase_counter)
+#     #top_genres = {word: count for word, count in counter.items() if count >= 3}
+#     top_genres = dict(counter.most_common(3)) # modify number to how many "most common" words, minimum should be 5
+
+#     for genre in common_genres:
+#         if genre in counter and genre not in top_genres:
+#             top_genres[genre] = counter[genre]
+
+#     return top_genres
+
+
 def simpleGenres(subjects):
     common_genres = ['fantasy', 'romance', 'fiction', 'thriller', 'mystery', 'horror', 'dystopian', 'drama', 'historical']
-    multi_genres = ['fantasy fiction', 'science fiction', 'historical romance', 'mystery thriller', 'young adult', 'enemies to lovers']
+    multi_genres = ['fantasy fiction', 'science fiction', 'historical romance', 'mystery thriller', 'young adult', 'enemies to lovers', 'new york times bestseller', 'american literature']
     stopwords = {'and', 'to', 'in', 'of', 'the', 'for', 'on', 'with', 'by', 'a', 'an', 'at', 'from', 'as', 'is', 'it', 'its'}
 
+    phrases_found = []
+    word_counter = Counter()
 
-    words = []
-    phrases = []
     for s in subjects:
         s = s.lower()
 
         for phrase in multi_genres:
             if phrase in s:
-                phrases.append(phrase)
+                phrases_found.append(phrase)
+                s = s.replace(phrase, '')
 
         tokens = re.findall(r'[a-z]+', s)
-        words.extend(tokens)
+        tokens = [t for t in tokens if t not in stopwords and len(t) > 2]
 
-    words = [w for w in words if w not in stopwords and len(w) > 2]
-    counter = Counter(words)
-    phrase_counter = Counter(phrases)
-    counter.update(phrase_counter)
-    #top_genres = {word: count for word, count in counter.items() if count >= 3}
-    top_genres = dict(counter.most_common(5))
+        word_counter.update(tokens)
 
-    for genre in common_genres:
-        if genre in counter and genre not in top_genres:
-            top_genres[genre] = counter[genre]
+    result = {}
 
-    return top_genres
+    # --- phrases ---
+    for p, c in Counter(phrases_found).items():
+        result[p] = c
+
+    # --- common genres ---
+    for g in common_genres:
+        if word_counter[g] > 0:
+            result[g] = word_counter[g]
+
+    # --- top words ---
+    for w, c in word_counter.most_common(1):
+        result[w] = c
+
+    return result
 
 ############################
-def main():
+def genre():
     books_read = clean_goodreads()
-    books_read = books_read[books_read['Date Read'].notna()]
+    #books_read = books_read[books_read['Date Read'].notna()]
+    books_read = books_read[books_read['Exclusive Shelf'] == 'read']
     book_list = books_read['Title'].tolist()
 
-    bookGenres = {}
+    bookGenres = []
     
     for book in book_list:
         record = fetchBookData(book)
         subjects = subjectList(record)
         if not subjects: # no subject list found
-            bookGenres[book] = None
+            continue
         else:
             genres = simpleGenres(subjects)
+            #print(genres)
             if not genres: # no top genres found
-                bookGenres[book] = None
+                continue
             else:
-                bookGenres[book] = list(genres.keys())
+                new_row = {"Book" : book, "Genre" : list(genres.keys())}
+                bookGenres.append(new_row)
     
-    for key, val in bookGenres.items():
-        print(f'{key}: {val}')
-    
-    #print(bookGenres)
+    df = pd.DataFrame(bookGenres)
+    books = df.explode("Genre")
+    return books
 
-    genre_counts = Counter()
-    for genre in bookGenres.values():
-        genre_counts.update(genre)
 
-    print(genre_counts)
-    top5 = genre_counts.most_common(5)
-    print(top5)
+def main():
+    books = genre()
+    plt.figure(figsize=(12,8))
+    sns.set_theme()
+    sns.set_palette(sns.color_palette("husl", 8))
+    sns.countplot(data=books, x='Genre', order=books['Genre'].value_counts().index)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig('graphs/genre_distribution.png')
+
 
 
 if __name__ == "__main__":
