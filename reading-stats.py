@@ -168,7 +168,7 @@ def totalPagesRead():
     session = clean_session_file()
     kindle_pages = int(session['number_of_page_flips'].sum())
 
-    print(f"In the past two years, you've completed the equivalent of {physical_pages} physical book pages and read {kindle_pages} pages on your Kindle.")
+    print(f"In the past two years, you've completed the equivalent of {physical_pages:,} physical book pages and read {kindle_pages:,} pages on your Kindle.")
 
     return physical_pages, kindle_pages
 
@@ -206,7 +206,7 @@ def faveAuthors():
 
     author_count = completed_books.groupby(['Author'])['Title'].count().reset_index().sort_values(by='Title', ascending=False)
 
-    print('Your favourite authors are...')
+    print('Your all-time favourite authors are...')
     for i in range(10):
         print(f"{author_count['Author'].values[i]} with a total of {author_count['Title'].values[i]} books read.")
     
