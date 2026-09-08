@@ -66,8 +66,9 @@ Generated graphs are saved in the graphs/ directory.
 - Collections / Counter – identifying common genre terms
 
 ## Project Structure
+```text
 .
-├── datasets/
+├── datasets/                           # Local datasets (not included in repo)
 │   ├── goodreads_library_export.csv
 │   ├── Kindle.reading-insights-sessions_with_adjustments.csv
 │   └── Kindle.Devices.ReadingSession.csv
@@ -77,9 +78,10 @@ Generated graphs are saved in the graphs/ directory.
 │   ├── weekly_avg_reading.png
 │   └── hourly_stats.png
 │
-├── genre_analysis.py
-├── kindle_analysis.py
+├── bookGenres.py
+├── reading-stats.py
 └── README.md
+```
 
 ## Purpose
 
