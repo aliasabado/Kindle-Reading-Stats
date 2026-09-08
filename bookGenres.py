@@ -8,11 +8,22 @@ import matplotlib.pyplot as plt
 
 
 """
-Read and clean GoodReads Export .csv file to get book information
+Cleans Goodreads library data and analyzes the genres of read books.
+
+Steps:
+1. Load and clean the Goodreads CSV data.
+2. Retrieve book information from the OpenLibrary API using ISBN or title and author.
+3. Extract subject information and identify common genres.
+4. Organize the genres for each book into a DataFrame.
+5. Visualize the distribution of genres among the books read.
 """
+
 def clean_goodreads():
-    gdLibrary = 'datasets/goodreads_library_export.csv'
-    goodreads = pd.read_csv(gdLibrary)
+    """
+    Read and clean GoodReads Export .csv file to get book information
+    """
+    grLibrary = 'datasets/goodreads_library_export.csv'
+    goodreads = pd.read_csv(grLibrary)
     
     goodreads = goodreads.iloc[:, list(range(16)) + [18]]
     goodreads.rename(columns={'Title': 'Title And Series'}, inplace=True)
@@ -23,10 +34,10 @@ def clean_goodreads():
     return goodreads
 
 
-"""
-Retrieves genre/topics of books using OpenLibrary API
-"""
 def fetchBookData(bookname):
+    """
+    Retrieves genre/topics of books using OpenLibrary API
+    """
     books_df = clean_goodreads()
     #books_df = books_df[books_df['Date Read'].notna()]
     isbn = books_df[books_df['Title'] == bookname]['ISBN'].iloc[0]
@@ -35,7 +46,7 @@ def fetchBookData(bookname):
     # prioritize using isbn to search for book
     if pd.isna(isbn) == False:
         url = f'https://openlibrary.org/isbn/{isbn}.json'
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
 
         if response.status_code == 200:
             return response.json()
@@ -47,7 +58,7 @@ def fetchBookData(bookname):
         'author': author,
         'limit': 1
     }
-    response = requests.get(url, params=params)
+    response = requests.get(url, params=params, timeout=10)
 
     #print(url)
     if response.status_code == 200:
@@ -56,10 +67,10 @@ def fetchBookData(bookname):
     return None
     
 
-"""
-Returns a list of subjects (genres)
-""" 
 def subjectList(record):
+    """
+    Returns a list of subjects (genres)
+    """ 
     if not record:
         return None
 
@@ -74,7 +85,7 @@ def subjectList(record):
         return None
 
     url = f'https://openlibrary.org{works_key}.json'
-    response = requests.get(url)
+    response = requests.get(url, timeout=10)
 
     #print(url)
     if response.status_code == 200:
@@ -84,10 +95,10 @@ def subjectList(record):
         return None
 
 
-"""
-Extracts the most frequent words from a list of book subjects.
-"""
 def simpleGenres(subjects):
+    """
+    Extracts the most frequent words from a list of book subjects.
+    """
     common_genres = ['fantasy', 'romance', 'fiction', 'thriller', 'mystery', 'horror', 'dystopian', 'drama', 'historical']
     multi_genres = ['fantasy fiction', 'science fiction', 'historical romance', 'mystery thriller', 'young adult', 'enemies to lovers', 'new york times bestseller', 'american literature']
     stopwords = {'and', 'to', 'in', 'of', 'the', 'for', 'on', 'with', 'by', 'a', 'an', 'at', 'from', 'as', 'is', 'it', 'its'}
@@ -162,7 +173,6 @@ def main():
     plt.xticks(rotation=45)
     plt.tight_layout()
     plt.savefig('graphs/genre_distribution.png')
-
 
 
 if __name__ == "__main__":

@@ -5,22 +5,18 @@ import math
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 
-# READING DATASETS
-# all_books = pd.read_csv('DocumentMetadata.csv', parse_dates=['EntryCreationDate'])
-# days_read = pd.read_csv('ReadingInsightsDayUnits.csv', parse_dates=['reading_tracked_on_day'])
-# book_session = pd.read_csv('reading-insights-sessions.csv', parse_dates=['end_time', 'start_time'])
-# session = pd.read_csv('ReadingSession.csv', parse_dates=['start_timestamp', 'end_timestamp'])
-completed_books = pd.read_csv('datasets/TitlesCompleted.csv')
-
 # FILNAMES
 readingInsights = 'datasets/Kindle.reading-insights-sessions_with_adjustments.csv'
 readingSession = 'datasets/Kindle.Devices.ReadingSession.csv'
-gdLibrary = 'datasets/goodreads_library_export.csv'
+grLibrary = 'datasets/goodreads_library_export.csv'
 
 ########################################################
-############ READING ALL DATASETS ######################
+################ READING ALL DATASETS ##################
 
 def clean_session_file():
+    """
+    clean ReadingSession file from Amazon Kindle Data
+    """
     session = pd.read_csv(readingSession, parse_dates=['start_timestamp', 'end_timestamp'])
     session = session[session['total_reading_millis'].notna()].copy()
 
@@ -43,7 +39,9 @@ def clean_session_file():
 
 
 def clean_book_insights():
-
+    """
+    clean Reading Insights Session file from Amazon Kindle Data
+    """
     book_session = pd.read_csv(readingInsights)
     book_session['start_time'] = pd.to_datetime(book_session["start_time"], format='mixed')
     book_session['end_time'] = pd.to_datetime(book_session["end_time"], format='mixed')
@@ -57,7 +55,10 @@ def clean_book_insights():
     return book_session
 
 def clean_goodreads():
-    goodreads = pd.read_csv(gdLibrary)
+    """
+    Clean GoodReads data 
+    """
+    goodreads = pd.read_csv(grLibrary)
     goodreads = goodreads.iloc[:, list(range(16)) + [18]]
 #    goodreads = goodreads[goodreads['Date Read'].notna()]
     goodreads['Year Read'] = pd.to_datetime(goodreads['Date Read'], errors='coerce').dt.year.astype('Int64')
@@ -98,8 +99,8 @@ def reading_totals():
     return read_per_day, overall_stat, total_sec
 
 
-# visualize the average reading time for each day of the week
-# todo: limit the rows to this year only, when there is enough data
+# Visualize the average reading time for each day of the week
+# TO DO: limit the rows to this year only, when there is enough data
 def weekly_avg_time():
 
     read_per_day, _, _ = reading_totals()
@@ -121,24 +122,22 @@ def weekly_avg_time():
 
 
 # book that took the shortest and longest amount of time to complete
-# need goodreads data: only total rows that is before the completion date in goodreads dataset
+# GoodReads data is used to merge the completion date of a book
 def shortest_longest_book():
-    insights = clean_book_insights()
-    #_, date_read = totalBooksRead()
+    current_year = date.today().year
 
+    insights = clean_book_insights()
     library = clean_goodreads()
-    two_years = library[(library['Year Read'] == 2025) | (library['Year Read'] == 2026)]
-    date_read = two_years[['Title', 'Date Read']]
+
+    books_this_year = library[(library['Year Read'] == current_year)]
+    date_read = books_this_year[['Title', 'Date Read']]
 
     completed_books = pd.merge(insights, date_read, how='left', left_on='book_title', right_on='Title')
     completed_books = completed_books[completed_books['Date Read'].notna()]
-    #completed_books = completed_books[completed_books['Exclusive Shelf'] == 'read']
     completed_books = completed_books[completed_books['start_date'] <= completed_books['Date Read']]
-    #print(completed_books)
 
     per_book = completed_books.groupby('book_title')['total_reading_milliseconds'].sum().reset_index()
     per_book['total_seconds'] = (per_book['total_reading_milliseconds']/1000).round(2)
-    #print(per_book)
 
     minidx = per_book['total_seconds'].idxmin()
     maxidx = per_book['total_seconds'].idxmax()
@@ -156,37 +155,36 @@ def shortest_longest_book():
 
 
 def totalPagesRead():
-    #curr_year = date.today().year
+    current_year = date.today().year
 
     # number of physical pages read
     goodreads = clean_goodreads()
     completed_books = goodreads[goodreads['Exclusive Shelf'] == 'read']
-    completed_books = completed_books[(completed_books['Year Read'] == 2025) | (completed_books['Year Read'] == 2026)]
+    completed_books = completed_books[(completed_books['Year Read'] == current_year)]
     physical_pages = completed_books['Number of Pages'].sum()
 
     # number of kindle pages flipped
     session = clean_session_file()
     kindle_pages = int(session['number_of_page_flips'].sum())
 
-    print(f"In the past two years, you've completed the equivalent of {physical_pages:,} physical book pages and read {kindle_pages:,} pages on your Kindle.")
+    print(f"This year, you've completed the equivalent of {physical_pages:,} physical book pages and read {kindle_pages:,} pages on your Kindle.")
 
     return physical_pages, kindle_pages
 
 
 def totalBooksRead():
-    #current_year = date.today().year
+    current_year = date.today().year
 
     library = clean_goodreads()
-    #books_this_year = library[library['Year Read'] == current_year]
-    two_years = library[(library['Year Read'] == 2025) | (library['Year Read'] == 2026)]
-    book_count = int(two_years['Date Read'].count())
-    books = two_years[['Title', 'Date Read']]
+    books_this_year = library[library['Year Read'] == current_year]
+    book_count = int(books_this_year['Date Read'].count())
+    books = books_this_year[['Title', 'Date Read']]
 
-    print(f'You completed {book_count} books in the last two years!')
+    print(f'You completed {book_count} books this year!')
 
     print('You read the following books:')
     for i in range(book_count):
-        print(f'{i+1}. {two_years['Title'].values[i]} on {two_years['Date Read'].values[i]}')
+        print(f'{i+1}. {books_this_year['Title'].values[i]} on {books_this_year['Date Read'].values[i]}')
 
     return book_count, books
 
@@ -212,79 +210,7 @@ def faveAuthors():
     
     return author_count
 
-
-# not done, multi-axis plot not showing
-def bookByMonth():
-    current_year = date.today().year
-    month_order = [
-        "January","February","March","April","May","June",
-        "July","August","September","October","November","December"
-    ]
-    library = clean_goodreads()
-
-    books_this_year = library[(library['Year Read'] == current_year)]
-    grouped_months = books_this_year.groupby('Month Name').agg({'Title': 'count', 'Number of Pages' : 'sum'})
-    grouped_months = grouped_months.reindex(month_order, fill_value=0).reset_index()
-
-    grouped_months['Month Name'] = pd.Categorical(
-        grouped_months['Month Name'],
-        categories=month_order,
-        ordered=True
-    )
-    grouped_months = grouped_months.sort_values('Month Name')
-    #print(grouped_months)
-
-    # PLOTTING ...
-    plt.figure(figsize=(15,6))
-
-    sns.set_theme(style="darkgrid")
-    sns.set_context("paper", rc={'lines.linewidth': 1.8})
-    #sns.set_palette("pastel")
-    pastel_colors = ["#A8DADC", "#FFCAD4"]
-
-    fig, ax1 = plt.subplots(figsize=(15,6))
-
-    sns.lineplot(
-        data=grouped_months,
-        x='Month Name',
-        y='Title',
-        marker='o',
-        ax=ax1,
-        label='Books Read',
-        color=pastel_colors[0]
-    )
-
-    ax1.set_ylabel('Number of Books')
-    #ax1.tick_params(axis='y')
-
-    # 📖 Pages line (secondary axis)
-    ax2 = ax1.twinx()
-
-    sns.lineplot(
-        data=grouped_months,
-        x='Month Name',
-        y='Number of Pages',
-        marker='o',
-        ax=ax2,
-        label='Pages Read',
-        color=pastel_colors[1]
-    )
-
-    ax2.set_ylabel('Number of Pages')
-    #ax2.tick_params(axis='y', labelcolor='tab:red')
-
-    # Combine legends
-    lines = ax1.lines + ax2.lines
-    labels = [l.get_label() for l in lines]
-    ax1.legend(lines, labels, loc='upper left')
-
-    plt.xticks(rotation=45)
-    plt.title("Books and Pages Read Per Month")
-    plt.xlabel('Month')
-    plt.tight_layout()
-    plt.show()
-
-
+# Visualize hourly reading trend oer day
 def hourlyReading():
     session = clean_session_file()
     session = session[['start_local', 'end_local', 'start_date', 'end_date', 'start_hour', 'start_hour_decimal']]
@@ -318,10 +244,9 @@ def hourlyReading():
 
 def main():
     # print reading stats
-    print('~~~~~~~~~~~~~~~~~~~~~~~~ Reading Analysis For Alia ~~~~~~~~~~~~~~~~~~~~~~~~')
+    print('~~~~~~~~~~~~~~~~~~~~~~~~ Kindle Reading Analysis For Alia ~~~~~~~~~~~~~~~~~~~~~~~~')
     _, stats, total_sec = reading_totals()
     print(f"Total Time Spent Reading: {int(stats[0])} days, {int(stats[1])} hours, {int(stats[2])} minutes, and {int(stats[3])} seconds.")
-    #print(total_sec)
 
     print()
     weekly_avg_time()
