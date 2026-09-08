@@ -80,6 +80,7 @@ Generated graphs are saved in the graphs/ directory.
 │
 ├── bookGenres.py
 ├── reading-stats.py
+├── Kindle Reading Report.pbix
 └── README.md
 ```
 
