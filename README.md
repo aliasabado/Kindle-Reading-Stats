@@ -78,9 +78,9 @@ Generated graphs are saved in the graphs/ directory.
 │   ├── weekly_avg_reading.png
 │   └── hourly_stats.png
 │
+├── Kindle Reading Report.pbix
 ├── bookGenres.py
 ├── reading-stats.py
-├── Kindle Reading Report.pbix
 └── README.md
 ```
 
