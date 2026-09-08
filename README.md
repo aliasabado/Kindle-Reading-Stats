@@ -84,6 +84,25 @@ Generated graphs are saved in the graphs/ directory.
 └── README.md
 ```
 
+## Power BI Dashboard
+
+In addition to the previous analysis, I created a Power BI dashboard to further visualize my reading habits over time and across individual books. The Power BI report is included as a downloadable .pbix file in this repository. 
+
+The report contains three tabs: Total Reading Time, Reading Per Book, and Monthly Trend. It also includes Year/Month and Book Title slicers, allowing the user to filter the visualizations by a specific time period or book.
+
+The raw data included in this report is from older reading data and has been limited to the first three months of the dataset to protect privacy.
+
+### Report Breakdown
+
+#### Total Reading Time
+Visualizes total reading time over time. This page includes a line chart that can be drilled down into different time periods, as well as a stacked bar chart showing the total reading time for each book.
+
+#### Reading Per Book
+Uses a line chart to visualize reading activity for each book over time. Each book is represented separately using the chart legend, allowing reading patterns across different books to be compared.
+
+#### Monthly Trend
+Uses a line chart to show monthly reading trends, including the total number of books opened and the total hours read each month.
+
 ## Purpose
 
 This project was created to explore my personal reading behaviour using real-world data. It combines data from multiple sources to answer questions such as what genres are being read most often, how much time is spent reading, when reading occurs, how many books are completed, and which authors are read most frequently.
