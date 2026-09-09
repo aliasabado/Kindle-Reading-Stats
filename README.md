@@ -55,6 +55,40 @@ The project generates visualizations including:
 
 Generated graphs are saved in the graphs/ directory.
 
+## Results
+
+Terminal output example of `reading-stats.py`
+
+```text
+~~~~~~~~~~~~~~~~~~~~~~~~ Kindle Reading Analysis For Alia ~~~~~~~~~~~~~~~~~~~~~~~~
+Total Time Spent Reading: 4 days, 7 hours, 14 minutes, and 10 seconds.
+
+You completed 3 books this year!
+You read the following books:
+1. Caraval on 2026/01/24
+2. The Jasad Heir on 2026/02/11
+3. The Jasad Crown on 2026/02/22
+
+This year, you've completed the equivalent of 1,611 physical book pages and read 11,614 pages on your Kindle.
+Shortest: Caraval - 11.62 hours.
+Longest: The Jasad Crown - 29.07 hours.
+That is roughly 32 seconds per page on a Kindle.
+
+You picked up your kindle for 55 separate days and opened it 576 different times.
+
+Your all-time favourite authors are...
+Rick Riordan with a total of 10 books read.
+J.K. Rowling with a total of 8 books read.
+Mary E. Pearson with a total of 6 books read.
+Holly Black with a total of 5 books read.
+Leigh Bardugo with a total of 4 books read.
+Suzanne Collins with a total of 4 books read.
+Ali Hazelwood with a total of 2 books read.
+Sara  Hashem with a total of 2 books read.
+Emily Henry with a total of 2 books read.
+Sarah Hogle with a total of 2 books read.
+```
+
 ## Technologies Used
 
 - Python
