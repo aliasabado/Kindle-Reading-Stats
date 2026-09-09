@@ -57,7 +57,7 @@ Generated graphs are saved in the graphs/ directory.
 
 ## Results
 
-Terminal output example of `reading-stats.py`
+Terminal output example for `reading-stats.py`
 
 ```text
 ~~~~~~~~~~~~~~~~~~~~~~~~ Kindle Reading Analysis For Alia ~~~~~~~~~~~~~~~~~~~~~~~~
