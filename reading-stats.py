@@ -195,7 +195,7 @@ def sessionCount():
     num_of_days = len(session['start_date'].unique())
     num_of_sessions = len(session)
 
-    print(f'You picked up your kindle for {num_of_days} separate days and opened it {num_of_sessions} different times.')
+    print(f'You picked up your kindle for {num_of_days} separate days and opened it {num_of_sessions:,} different times.')
 
 
 def faveAuthors():

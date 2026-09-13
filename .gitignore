@@ -1,2 +1,4 @@
 # Personal Reading Data
 datasets/*.csv
+old datasets/*.csv
+notebooks/
